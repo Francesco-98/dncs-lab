@@ -15,8 +15,8 @@ This repository contains the Vagrant files required to run the virtual lab envir
         |     |                |            |10.0.0.5/30  |            |
         |  M  |                +------------+             +------------+
         |  A  |      192.168.0.129/25|enp0s8                     |enp0s8
-        |  N  |        192.168.1.1/24|                           |192.168.2.2/23
-        |  A  |                      |                           |
+        |  N  |        192.168.1.1/24|                    enp0s8 |192.168.2.1/23
+        |  A  |                      |            192.168.2.2/23 |
         |  G  |                      |                     +-----+----+
         |  E  |                      |enp0s8               |          |
         |  M  |            +-------------------+           |          |
@@ -118,4 +118,60 @@ The assignment deliverable consists of a Github repository containing:
 
 # Design
 
-Address informations
+## Address informations
+
+| Device       | Network       | Subnet          | Broadcast     | Hosts | Host-min      | Host-max      |
+|--------------|---------------|-----------------|---------------|-------|---------------|---------------|
+| Host-a       | 192.168.1.0   | 255.255.255.0   | 192.168.1.255 | 254   | 192.168.1.1 	 | 192.168.1.254 |
+| Host-b       | 192.168.0.128 | 255.255.255.128 | 192.168.0.255 | 126   | 192.168.0.129 | 192.168.0.254 |
+| Host-c       | 192.168.2.0   | 255.255.254.0   | 192.168.3.255 | 510   | 192.168.2.1   | 192.168.3.254 |
+| Inter-router | 10.0.0.4      | 255.255.255.252 | 10.0.0.7      | 2     | 10.0.0.5      | 10.0.0.6      |
+
+To assign IP adresses to the VMs I had to follow this requirements, that say:
+
+    "Hosts-A" must be able to scale up to 159 usable addresses
+    "Hosts-B" must be able to scale up to 67 usable addresses
+    "Hub" must be able to scale up to 419 usable addresses
+
+The Netmasks are sized to be as small as possible respecting the specifications.
+
+## Routing tables
+
+#### Host-a
+| Destination  | Gateway     | Genmask       | Interface |
+|--------------|-------------|---------------|-----------|
+| 192.168.0.0  | 192.168.1.1 | 255.255.0.0   | enp0s8    |
+| 192.168.1.0  | 0.0.0.0     | 255.255.255.0 | enp0s8    |
+
+#### Host-b
+| Destination   | Gateway       | Genmask         | Interface |
+|---------------|---------------|-----------------|-----------|
+| 192.168.0.0   | 192.168.0.129 | 255.255.0.0     | enp0s8    |
+| 192.168.0.128 | 0.0.0.0       | 255.255.255.128 | enp0s8    |
+
+#### Host-c
+| Destination   | Gateway       | Genmask         | Interface |
+|---------------|---------------|-----------------|-----------|
+| 172.17.0.0    | 0.0.0.0       | 255.255.0.0     | docker0   |
+| 192.168.0.0   | 192.168.2.1   | 255.255.0.0     | enp0s8    |
+| 192.168.2.0   | 0.0.0.0       | 255.255.254.0   | enp0s8    |
+
+#### Router-1
+| Destination   | Gateway       | Genmask         | Interface |
+|---------------|---------------|-----------------|-----------|
+| 192.168.0.0   |  10.0.0.6     | 255.255.0.0     | enp0s9    |
+| 10.0.0.4      |  0.0.0.0      | 255.255.255.252 | enp0s9    |
+| 192.168.0.128 |  0.0.0.0      | 255.255.255.128 | enp0s8    |
+| 192.168.1.0   |  0.0.0.0      | 255.255.255.0   | enp0s8    |
+
+#### Router-2
+| Destination   | Gateway       | Genmask         | Interface |
+|---------------|---------------|-----------------|-----------|
+| 10.0.0.4      | 0.0.0.0       | 255.255.255.252 | enp0s9    |
+| 192.168.0.0   | 10.0.0.5      | 255.255.0.0     | enp0s9    |
+| 192.168.2.0   | 0.0.0.0       | 255.255.254.0   | enp0s8    |
+
+
+
+
+
